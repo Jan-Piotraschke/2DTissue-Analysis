@@ -42,5 +42,6 @@ cmake_install.cmake
 Makefile
 
 *.csv
+*.png
 
 vscode.yaml

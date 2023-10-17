@@ -7,9 +7,8 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 
 current_path = Path(os.getcwd())
-# data = pd.read_csv(current_path.parents[1] / "assets" / 'v_order_analysis_low_noise.csv', sep=',')
+data = pd.read_csv(current_path.parents[1] / "assets" / 'v_order_analysis.csv', sep=',', header=None)
 # data = data[data['particles'] % 50 == 0]  # drop all rows where particles number is not Mod 100
-data = pd.read_csv(current_path.parents[1] / "assets" / 'v_order_data_0_to_80_noise.csv', sep=',')
 
 # Extract x and y values
 x = data['particles']
