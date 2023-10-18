@@ -20,15 +20,16 @@ function heatmap_difference(matrix1::Matrix{T}, matrix2::Matrix{T}; scale=:linea
 
     # Compute the difference
     difference = matrix1 - matrix2
-    max_diff = maximum(abs.(difference))
-    original_range = (-max_diff, max_diff)
 
-    # Depending on the scale chosen, transform the difference matrix
-    if scale == :log
-        difference = sign.(difference) .* log.(1 .+ abs.(difference))
-    elseif scale == :sqrt
-        difference = sign.(difference) .* sqrt.(abs.(difference))
+    # Custom transformation for the difference
+    function custom_transform(x::T) where T
+        if abs(x) <= 0.2
+            return x
+        else
+            return sign(x) * 0.2 + (sign(x) * 0.2 * 0.9)
+        end
     end
+    difference = custom_transform.(difference)
 
     # Beautify the heatmap for publication
     fig = Figure(resolution = (800, 800), title = "Difference Heatmap")
@@ -41,34 +42,19 @@ function heatmap_difference(matrix1::Matrix{T}, matrix2::Matrix{T}; scale=:linea
     hm = heatmap!(
         ax,
         difference,
-        colormap = :viridis,
-        colorrange = original_range
+        colormap = cgrad([:blue, :white, :red], [0, 0.5, 1], scale=:linear),
+        colorrange = (-0.2, 0.2)  # custom color range
     )
-
-    # Modify colorbar ticks for log scale
-    if scale == :log
-        tick_vals = [sign(x) * log(1 + abs(x)) for x in original_range]
-        cbar = Colorbar(
-            fig,
-            hm,
-            width = 20,
-            label = "Difference",
-            ticks = tick_vals
-        )
-    else
-        cbar = Colorbar(
-            fig,
-            hm,
-            width = 20,
-            label = "Difference"
-        )
-    end
-
+    cbar = Colorbar(
+        fig,
+        hm,
+        width = 20,
+        label = "Difference"
+    )
     fig[1, 2] = cbar
-    fig
+    return fig
 end
 
- # for example, but you can use others like :plasma, :inferno, :cividis, etc.
 function make_symmetric_with_min(matrix::Matrix{T}) where T
     # Check if the matrix is square
     if size(matrix, 1) != size(matrix, 2)
@@ -101,4 +87,5 @@ distance_3D = normalize_matrix(distance_3D)
 distance_kachelmuster = read_data("../../MeshCartographyLib/meshes/data", "ellipsoid_x4_uv_kachelmuster_distance_matrix_static.csv")
 distance_kachelmuster = normalize_matrix(distance_kachelmuster)
 
-heatmap_difference(distance_3D, distance_kachelmuster, scale=:log)
+fig = heatmap_difference(distance_3D, distance_kachelmuster, scale=:log)
+save("difference_heatmap.png", fig; resolution = (2400, 2400))
